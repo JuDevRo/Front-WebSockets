@@ -1,25 +1,39 @@
-import React from 'react';
-import logo from './logo.svg';
+import {useEffect, useState} from 'react'
+import io, {Socket} from "socket.io-client"
 import './App.css';
+import MessageInput from './components/MessagesInput';
+import Messages from './components/Messages';
 
 function App() {
+  const [socket, setSocket] = useState<Socket>()
+  const [messages, setMessages] = useState<string[]>([])
+
+  const send = (value: string) => {
+    socket?.emit('message', value)
+  }
+
+  useEffect(() => {
+    const newSocket = io('http://localhost:8001')
+    setSocket(newSocket)
+  }, [setSocket])
+
+  const messageListener = (message: string) => {
+    setMessages([...messages, message])
+  }
+
+  useEffect(() => {
+    socket?.on("message", messageListener)
+    return () => {
+      socket?.off("message", messageListener)
+    }
+  }, [messageListener])
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <>
+      {" "}
+      <MessageInput send={send}/>
+      <Messages messages={messages}/>
+    </>
   );
 }
 
